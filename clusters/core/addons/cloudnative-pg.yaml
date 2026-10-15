@@ -1,0 +1,13 @@
+# Installed by RKE2's Helm controller when this file is in
+# /var/lib/rancher/rke2/server/manifests (scripts/install-rke2-server.sh puts it there).
+# No version: the chart's latest at install time. Pin it (spec.version) once installed.
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: cloudnative-pg
+  namespace: kube-system
+spec:
+  repo: https://cloudnative-pg.github.io/charts
+  chart: cloudnative-pg
+  targetNamespace: cnpg-system
+  createNamespace: true

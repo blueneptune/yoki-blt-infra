@@ -1,0 +1,9 @@
+# /etc/rancher/rke2/config.yaml - written by scripts/install-rke2-server.sh.
+# Values in @...@ are filled in from clusters/<name>/cluster.env.
+write-kubeconfig-mode: "0600"
+selinux: true
+tls-san:
+@TLS_SANS@
+# Pod network: Canal (RKE2's default).
+cni: canal
+# The servers run applications too: three nodes, no separate workers.

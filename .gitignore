@@ -1,3 +1,4 @@
 *.local.env
 *.kubeconfig
 .secrets/
+clusters/*/cluster.env
