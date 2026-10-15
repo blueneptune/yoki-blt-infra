@@ -1,0 +1,45 @@
+# Harbor: the cluster's own container registry, reachable only from the
+# core and proxy clusters. NOT dropped in automatically by the install
+# script - it needs its hostname in DNS and its TLS certificate first
+# (see docs/harbor.md), then:
+#   sed ... harbor.yaml.tmpl | kubectl apply -f -
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: harbor
+  namespace: kube-system
+spec:
+  repo: https://helm.goharbor.io
+  chart: harbor
+  targetNamespace: harbor
+  createNamespace: true
+  valuesContent: |-
+    externalURL: https://@HARBOR_HOST@
+    expose:
+      type: ingress
+      tls:
+        enabled: true
+        certSource: secret
+        secret:
+          secretName: harbor-tls
+      ingress:
+        className: nginx
+        hosts:
+          core: @HARBOR_HOST@
+        annotations:
+          # Only the core and proxy clusters' networks. Everyone else
+          # gets 403 before reaching Harbor.
+          nginx.ingress.kubernetes.io/whitelist-source-range: "@HARBOR_ALLOWED_CIDRS@"
+          # Image layers are large.
+          nginx.ingress.kubernetes.io/proxy-body-size: "0"
+    persistence:
+      enabled: true
+      persistentVolumeClaim:
+        registry: {storageClass: longhorn, size: 200Gi}
+        jobservice: {jobLog: {storageClass: longhorn, size: 1Gi}}
+        database: {storageClass: longhorn, size: 5Gi}
+        redis: {storageClass: longhorn, size: 1Gi}
+        trivy: {storageClass: longhorn, size: 5Gi}
+    # The admin password is set from a Secret, not here.
+    existingSecretAdminPassword: harbor-admin
+    existingSecretAdminPasswordKey: password

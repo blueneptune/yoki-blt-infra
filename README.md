@@ -34,7 +34,7 @@ clusters/
   core/
     rke2/        RKE2 configuration for the core servers
     addons/      platform pieces, as HelmChart manifests RKE2 applies itself:
-                 kube-vip, cert-manager, Longhorn, CloudNativePG
+                 kube-vip, cert-manager, Longhorn, CloudNativePG, Harbor
   proxy/         (later)
 apps/
   base/          blt API, Prefect server and worker, Postgres - per app
@@ -59,7 +59,7 @@ docs/            servers.md (what to ask for), runbooks
 | Postgres | CloudNativePG |
 | Certificates | cert-manager; core's `*.blt.ecp.ensono.com` certificate from the company CA, on core's ingress only |
 | Authentication between zones | Zitadel machine users first; mTLS (step-ca + cert-manager) later |
-| Images | ghcr.io to start (assumed - not yet confirmed); an internal registry when the proxy zone arrives |
+| Images | Harbor in core, reachable only from the core and proxy clusters; also a pull-through cache for public images (docs/harbor.md) |
 
 ## Branches and releases
 
