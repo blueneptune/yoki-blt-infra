@@ -40,7 +40,8 @@ apps/
   base/          blt API, Prefect server and worker, Postgres - per app
   overlays/      per cluster: core-dev first, then production, proxy
 scripts/         installing RKE2 on a server, joining one, getting kubectl access
-docs/            servers.md (what to ask for), runbooks
+docs/            servers.md (what to ask for), lab-prerequisites.md,
+                 core-cluster.md (the lab cluster as built), runbooks
 ```
 
 - **Kustomize** for our own applications, **Helm** for third-party ones -
