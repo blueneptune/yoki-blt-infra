@@ -1,0 +1,27 @@
+# The two names blt answers on, through Traefik, with certificates from
+# the lab's step-ca (ClusterIssuer step-ca, issued and renewed by
+# cert-manager). DNS: *.blt.lab.ethos.home points at Traefik.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: blt
+  namespace: blt
+  annotations:
+    cert-manager.io/cluster-issuer: step-ca
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts: [api.blt.lab.ethos.home]
+      secretName: blt-api-tls
+    - hosts: [prefect.blt.lab.ethos.home]
+      secretName: prefect-tls
+  rules:
+    - host: api.blt.lab.ethos.home
+      http:
+        paths:
+          - {path: /, pathType: Prefix, backend: {service: {name: blt-api, port: {name: http}}}}
+    - host: prefect.blt.lab.ethos.home
+      http:
+        paths:
+          - {path: /, pathType: Prefix, backend: {service: {name: prefect-server, port: {name: http}}}}

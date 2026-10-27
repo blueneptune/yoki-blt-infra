@@ -1,0 +1,11 @@
+# kubectl apply -k clusters/core/blt
+# newTag: the blt-v5-poc commit the images were built from.
+resources:
+  - namespace.yaml
+  - postgres.yaml
+  - apps.yaml
+  - ingress.yaml
+images:
+  - {name: localhost/blt-api, newTag: 422c54a}
+  - {name: localhost/blt-prefect-server, newTag: 422c54a}
+  - {name: localhost/blt-prefect-worker, newTag: 422c54a}

@@ -1,0 +1,119 @@
+# blt's own services: the API, the Prefect server and one Prefect worker.
+# Images are built from blt-v5-poc and copied to the nodes by
+# scripts/load-images.sh (no registry yet), so they are never pulled; the
+# tag is the blt commit, set in kustomization.yaml.
+# Secrets: blt-app (scripts/blt-secrets.sh), blt-pg-prefect
+# (scripts/postgres-secrets.sh). Postgres: postgres.yaml.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: blt-api
+  namespace: blt
+spec:
+  # One: it runs the database migrations as it starts.
+  replicas: 1
+  strategy: {type: Recreate}
+  selector: {matchLabels: {app: blt-api}}
+  template:
+    metadata: {labels: {app: blt-api}}
+    spec:
+      containers:
+        - name: api
+          image: localhost/blt-api
+          imagePullPolicy: Never
+          env:
+            - name: BLT_API_KEY
+              valueFrom: {secretKeyRef: {name: blt-app, key: BLT_API_KEY}}
+            - name: BLT_DATABASE_URL
+              valueFrom: {secretKeyRef: {name: blt-app, key: BLT_DATABASE_URL}}
+          ports: [{name: http, containerPort: 8000}]
+          readinessProbe:
+            tcpSocket: {port: http}
+            periodSeconds: 10
+          resources:
+            requests: {cpu: 100m, memory: 256Mi}
+            limits: {memory: 512Mi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: blt-api
+  namespace: blt
+spec:
+  selector: {app: blt-api}
+  ports: [{name: http, port: 8000, targetPort: http}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prefect-server
+  namespace: blt
+spec:
+  replicas: 1
+  strategy: {type: Recreate}
+  selector: {matchLabels: {app: prefect-server}}
+  template:
+    metadata: {labels: {app: prefect-server}}
+    spec:
+      containers:
+        - name: server
+          image: localhost/blt-prefect-server
+          imagePullPolicy: Never
+          env:
+            - {name: PG_HOST, value: blt-pg-rw.blt.svc}
+            - {name: PG_PORT, value: "5432"}
+            - {name: PREFECT_LISTEN_HOST, value: 0.0.0.0}
+            - {name: PREFECT_LISTEN_PORT, value: "4200"}
+            - {name: PREFECT_SERVER_UI_API_URL, value: /api}
+            - {name: PREFECT_SERVER_ANALYTICS_ENABLED, value: "false"}
+            # No POSTGRES_PASSWORD: the operator owns the prefect role and
+            # database, so start.py only connects.
+            - name: PREFECT_DB_PASSWORD
+              valueFrom: {secretKeyRef: {name: blt-pg-prefect, key: password}}
+            - name: PREFECT_SERVER_API_AUTH_STRING
+              valueFrom: {secretKeyRef: {name: blt-app, key: PREFECT_AUTH}}
+          ports: [{name: http, containerPort: 4200}]
+          readinessProbe:
+            httpGet: {path: /api/health, port: http}
+            periodSeconds: 10
+          resources:
+            requests: {cpu: 200m, memory: 512Mi}
+            limits: {memory: 1Gi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prefect-server
+  namespace: blt
+spec:
+  selector: {app: prefect-server}
+  ports: [{name: http, port: 4200, targetPort: http}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prefect-worker
+  namespace: blt
+spec:
+  replicas: 1
+  strategy: {type: Recreate}
+  selector: {matchLabels: {app: prefect-worker}}
+  template:
+    metadata: {labels: {app: prefect-worker}}
+    spec:
+      containers:
+        - name: worker
+          image: localhost/blt-prefect-worker
+          imagePullPolicy: Never
+          env:
+            - {name: PREFECT_API_URL, value: "http://prefect-server.blt.svc:4200/api"}
+            - {name: BLT_API_URL, value: "http://blt-api.blt.svc:8000"}
+            - {name: BLT_MAX_PARALLEL, value: "4"}
+            - {name: DO_NOT_TRACK, value: "1"}
+            - name: PREFECT_API_AUTH_STRING
+              valueFrom: {secretKeyRef: {name: blt-app, key: PREFECT_AUTH}}
+            - name: BLT_API_KEY
+              valueFrom: {secretKeyRef: {name: blt-app, key: BLT_API_KEY}}
+          resources:
+            requests: {cpu: 200m, memory: 512Mi}
+            limits: {memory: 2Gi}
