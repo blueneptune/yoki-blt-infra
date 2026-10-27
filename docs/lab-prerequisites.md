@@ -1,4 +1,4 @@
-# Lab prerequisites - blt.ethos.home
+# Lab prerequisites - blt.lab.ethos.home
 
 Everything needed to stand blt up in the home lab the way it will run in
 production: an RKE2 core cluster, certificates from the lab's smallstep
@@ -16,13 +16,13 @@ Server sizes and ports are explained in [servers.md](servers.md).
 
 | | Item | Blocks |
 |---|---|---|
-| [ ] | 3 VMs, **Rocky Linux 9** minimal: `blt-core-01`, `blt-core-02`, `blt-core-03` | core |
-| [ ] | Each: **4 vCPU, 16 GB RAM**, 60 GB system disk | core |
-| [ ] | Each: a **second, empty 100 GB disk** (Longhorn storage) - unformatted, no partitions | core |
-| [ ] | Static IP each, all on one subnet | core |
-| [ ] | SELinux left **enforcing**; `chronyd` running | core |
+| [x] | 3 VMs, **Rocky Linux 9** minimal: `blt-core-01`, `blt-core-02`, `blt-core-03` | core - `blt-core-01/02/03.lab.ethos.home` |
+| [x] | Each: **4 vCPU, 16 GB RAM**, 60 GB system disk | core |
+| [x] | Each: a **second, empty 100 GB disk** (Longhorn storage) - unformatted, no partitions | core - 100 GiB each, at `/var/lib/longhorn` |
+| [x] | Static IP each, all on one subnet | core - 192.168.51.21-23 |
+| [x] | SELinux left **enforcing**; `chronyd` running | core - SELinux enforcing (chronyd not checked) |
 | [ ] | `firewalld` **off** on these three - or tell me it must stay on, and I open the ports in servers.md | core |
-| [ ] | **RKE2 not yet installed** - see the note below | core |
+| [x] | **RKE2 not yet installed** - see the note below | core - installed by hand, with Rancher, Longhorn and kube-vip - see [core-cluster.md](core-cluster.md) |
 
 **About installing RKE2:** `scripts/install-rke2-server.sh` in this
 repository installs and configures it (SELinux, the VIP, Longhorn's disk,
@@ -45,9 +45,9 @@ Until these exist, collection runs on a Prefect worker in core, as today.
 
 | | Item | Blocks |
 |---|---|---|
-| [ ] | One **spare IP** on the core subnet, used by nothing - the core cluster's address (kube-vip) | core |
+| [x] | One **spare IP** on the core subnet, used by nothing - the core cluster's address (kube-vip) | core - 192.168.51.29 (API); Traefik's is 192.168.51.20 |
 | [ ] | One spare IP on the access subnet, for the access cluster | access |
-| [ ] | The VMs' **network interface name** (`ens18` on Proxmox, `ens192` on VMware, ...) | core |
+| [x] | The VMs' **network interface name** (`ens18` on Proxmox, `ens192` on VMware, ...) | core - `ens192` |
 
 ## 4. DNS
 
@@ -55,10 +55,10 @@ In the DNS server that answers for `ethos.home`:
 
 | | Record | Points to | Blocks |
 |---|---|---|---|
-| [ ] | `blt-core-01/02/03.ethos.home` | each core VM | core |
-| [ ] | `*.blt.ethos.home` (wildcard) | the core spare IP | core |
+| [x] | `blt-core-01/02/03.lab.ethos.home` | each core VM | core |
+| [x] | `*.blt.lab.ethos.home` (wildcard) | the core spare IP | core - points at Traefik, 192.168.51.20 |
 | [ ] | `blt-az1-01/02/03.ethos.home` | each access VM | access |
-| [ ] | Which DNS server it is - some home routers cannot do wildcards | | core |
+| [x] | Which DNS server it is - some home routers cannot do wildcards | | core - Firewalla |
 
 The wildcard covers every hostname: `auth`, `api`, `ui`, `admin`,
 `prefect`, `registry`, `grafana`.
@@ -67,11 +67,11 @@ The wildcard covers every hostname: `auth`, `api`, `ui`, `admin`,
 
 | | Item | Blocks |
 |---|---|---|
-| [ ] | step-ca's **URL** as the VMs will reach it (e.g. `https://ca.ethos.home:9000`), and the VMs can reach it | core |
-| [ ] | The **root certificate** (`root_ca.crt` - the public half) and its **fingerprint** (`step ca root`, `step certificate fingerprint root_ca.crt`) | core |
-| [ ] | A **JWK provisioner** for the cluster: `step ca provisioner add blt-cluster --create`. **Keep its password** - you will put it into the cluster yourself with one command, so it never passes through chat | core |
-| [ ] | The CA **allows** `*.blt.ethos.home` (if it restricts names) | core |
-| [ ] | The root certificate **installed on your desktop** (Windows certificate store), so browsers trust `*.blt.ethos.home` | core |
+| [x] | step-ca's **URL** as the VMs will reach it (e.g. `https://ca.ethos.home:9000`), and the VMs can reach it | core - `https://ca.lab.ethos.home` (port 443; podman container on marv) |
+| [x] | The **root certificate** (`root_ca.crt` - the public half) and its **fingerprint** (`step ca root`, `step certificate fingerprint root_ca.crt`) | core - "Ethos Home Root CA", `add77329...a3c40d`, checked on the CA |
+| [x] | ~~A JWK provisioner~~ - replaced by an **ACME** provisioner (`acme`): cert-manager speaks ACME itself, so no CA password lives in the cluster | core |
+| [x] | The CA **allows** `*.blt.lab.ethos.home` (if it restricts names) | core - no policy on the CA |
+| [ ] | The root certificate **installed on your desktop** (Windows certificate store), so browsers trust `*.blt.lab.ethos.home` | core |
 
 Certificates are issued and renewed automatically by cert-manager and
 step-issuer; nothing is issued by hand.
@@ -80,7 +80,7 @@ step-issuer; nothing is issued by hand.
 
 | | Item | Blocks |
 |---|---|---|
-| [ ] | On every VM, a user with `sudo` that accepts this SSH key (from eth00dev1): | core |
+| [x] | On every VM, a user with `sudo` that accepts this SSH key (from eth00dev1): | core - user `blue` |
 
 ```
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKKPjKpioBHJFeAAWoYaqoj4S0rwPcAjdg/DD/3V8Odv blueneptune@gmail.com
@@ -88,20 +88,20 @@ ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKKPjKpioBHJFeAAWoYaqoj4S0rwPcAjdg/DD/3V8Odv
 
 | | Item | Blocks |
 |---|---|---|
-| [ ] | eth00dev1 can reach every VM on **22** (SSH) and the cluster VIPs on **6443** (Kubernetes API) | core |
+| [x] | eth00dev1 can reach every VM on **22** (SSH) and the cluster VIPs on **6443** (Kubernetes API) | core |
 | [ ] | Confirmation that these VMs are **dedicated** and may be rebuilt | core |
 
 ## 7. Outbound from the VMs
 
 | | Item | Blocks |
 |---|---|---|
-| [ ] | Internet access to `docker.io`, `ghcr.io`, `quay.io`, `registry.k8s.io`, `get.rke2.io`, `rpm.rancher.io`, `github.com` - or tell me it is blocked, and a registry mirror comes first | core |
+| [x] | Internet access to `docker.io`, `ghcr.io`, `quay.io`, `registry.k8s.io`, `get.rke2.io`, `rpm.rancher.io`, `github.com` - or tell me it is blocked, and a registry mirror comes first | core - images pulled from all of them |
 
 ## 8. GitHub
 
 | | Repository | Blocks |
 |---|---|---|
-| [ ] | `blueneptune/yoki-blt-infra` - this repository, pushed with its branches | core |
+| [x] | `blueneptune/yoki-blt-infra` - this repository, pushed with its branches | core |
 | [ ] | `blueneptune/yoki-py-netbackup-sdk` - pushed with its `v0.1.0` tag | source |
 | [ ] | *Later:* `yoki-py-vmware-sdk`, `yoki-py-servicenow-sdk`, `yoki-py-rubrik-sdk` - created when each is started | *later* |
 
@@ -132,12 +132,14 @@ cluster) reach it?
 
 ## Order of work once ready
 
-1. Sections 1, 3-8 complete: build the core cluster (RKE2, kube-vip,
-   cert-manager + step-issuer, Longhorn, CloudNativePG), prove it
-   survives losing a server.
-2. Certificates from step-ca, then Harbor at `registry.blt.ethos.home`.
-3. Postgres databases; blt's API; the Prefect server and a core worker,
-   collecting from `cv-toaster`.
-4. Zitadel at `auth.blt.ethos.home`.
+1. ~~Build the core cluster~~ - done by hand (2026-10-25); cert-manager
+   and CloudNativePG added after. Still to prove: it survives losing a
+   server.
+2. ~~Certificates from step-ca~~ - done (2026-10-27, ACME). Harbor at
+   `registry.blt.lab.ethos.home` - next; images are copied to the nodes
+   until then.
+3. ~~Postgres; blt's API; Prefect server and worker, collecting from
+   `cv-toaster`~~ - done, cut over from eth00dev1 on 2026-10-27.
+4. Zitadel at `auth.blt.lab.ethos.home`.
 5. Section 2: the first access zone, with its worker connecting back.
 6. Section 9, source by source: probes first, then collection.
