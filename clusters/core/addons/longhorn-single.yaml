@@ -1,0 +1,16 @@
+# A Longhorn class that keeps one copy of each volume, on the node that
+# uses it. For workloads that replicate themselves - CloudNativePG keeps
+# a copy of the database on each of its instances, so three Longhorn
+# copies under each of three instances would be nine of everything.
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: longhorn-single
+provisioner: driver.longhorn.io
+allowVolumeExpansion: true
+reclaimPolicy: Retain
+volumeBindingMode: WaitForFirstConsumer
+parameters:
+  numberOfReplicas: "1"
+  dataLocality: strict-local
+  staleReplicaTimeout: "30"

@@ -1,0 +1,51 @@
+# blt's Postgres: three instances (one primary, two streaming replicas)
+# managed by CloudNativePG, one per node. Holds two databases:
+#   blt      blt's own data, owned by role blt (password: secret blt-pg-app,
+#            created by the operator)
+#   prefect  the Prefect server's, owned by role prefect (password: secret
+#            blt-pg-prefect, created by scripts/postgres-secrets.sh)
+# Services: blt-pg-rw (the primary - what applications use), blt-pg-ro.
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: blt-pg
+  namespace: blt
+spec:
+  instances: 3
+  # Same major version as the podman stack it replaces, so moving the
+  # data is a plain dump and restore.
+  imageName: ghcr.io/cloudnative-pg/postgresql:17.11-standard-trixie
+  storage:
+    storageClass: longhorn-single
+    size: 20Gi
+  affinity:
+    enablePodAntiAffinity: true
+    podAntiAffinityType: required
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      memory: 1Gi
+  bootstrap:
+    initdb:
+      database: blt
+      owner: blt
+  managed:
+    roles:
+      - name: prefect
+        ensure: present
+        login: true
+        passwordSecret:
+          name: blt-pg-prefect
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: blt-pg-prefect
+  namespace: blt
+spec:
+  cluster:
+    name: blt-pg
+  name: prefect
+  owner: prefect
