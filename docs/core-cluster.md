@@ -12,7 +12,9 @@ differs, this page is right.
 | `blt-core-02.lab.ethos.home` | 192.168.51.22 | control plane, etcd, workloads |
 | `blt-core-03.lab.ethos.home` | 192.168.51.23 | control plane, etcd, workloads |
 
-Rocky Linux 9.8, 4 vCPU and 16 GB each, SELinux enforcing. SSH as
+Rocky Linux 9.8, 4 vCPU and 16 GB each, SELinux enforcing. Disks: 60 GiB
+system, 200 GiB `/data/rke2` (sdb), 200 GiB Longhorn (sdc) - both LVM, grown
+from 100 GiB on 2026-10-28 (`pvresize` + `lvextend -r`, online). SSH as
 `blue` (key only), passwordless sudo.
 
 | Address | What |
@@ -29,7 +31,8 @@ Not by `scripts/install-rke2-server.sh` - that branch
 - **RKE2** v1.36.5+rke2r1, Canal networking, data under `/data/rke2`.
 - **kube-vip** v1.3.1, API address and LoadBalancer services, on `ens192`.
 - **Traefik** (RKE2's own), the default ingress class.
-- **Longhorn** 1.9.2, 100 GiB per server at `/var/lib/longhorn`, three
+- **Longhorn** 1.9.2, 200 GiB per server at `/var/lib/longhorn` (30 GiB
+  held back), three
   copies by default (storage class `longhorn`, the default).
 - **Rancher** 2.15 at `rancher.blt.lab.ethos.home`, and the Longhorn UI
   at `longhorn.blt.lab.ethos.home`. The owner's; blt does not touch them.

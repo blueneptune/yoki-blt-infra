@@ -5,8 +5,8 @@
 `clusters/core/addons/harbor/harbor.yaml`, secrets from
 `scripts/harbor-secrets.sh` (admin password: see that script's header).
 Storage on `longhorn-two` (two copies): registry 40 GiB, database 5,
-Trivy 5, Redis 1, job logs 1. The servers' Longhorn disks are the limit:
-grow them before the registry fills.
+Trivy 5, Redis 1, job logs 1. The servers' Longhorn disks are the limit
+(200 GiB each since 2026-10-28): grow them before the registry fills.
 
 Not done yet: a `blt` project and robot accounts, the servers trusting
 the lab CA for pulls, proxy-cache projects, and the source-address
