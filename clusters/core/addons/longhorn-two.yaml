@@ -1,0 +1,15 @@
+# A Longhorn class with two copies of each volume: survives losing one
+# server, at two thirds of the default class's space. The core servers
+# have 70 GiB each that Longhorn may fill, so three copies of a registry
+# do not fit.
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: longhorn-two
+provisioner: driver.longhorn.io
+allowVolumeExpansion: true
+reclaimPolicy: Retain
+volumeBindingMode: Immediate
+parameters:
+  numberOfReplicas: "2"
+  staleReplicaTimeout: "30"

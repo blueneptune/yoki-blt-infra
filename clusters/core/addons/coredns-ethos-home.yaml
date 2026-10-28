@@ -1,0 +1,53 @@
+# Send every ethos.home lookup to the Firewalla (192.168.50.1), the only
+# lab DNS server that has those names. The servers list the nodes use
+# also has 192.168.51.3, which does not, and CoreDNS's forward picks an
+# upstream at random - so about half the lookups of cv-toaster and other
+# lab hosts failed from pods (2026-10-28).
+#
+# A HelmChartConfig replaces the chart's whole `servers` list, so the
+# first entry repeats RKE2's default server block unchanged.
+#
+#   kubectl apply -f clusters/core/addons/coredns-ethos-home.yaml
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: rke2-coredns
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    servers:
+      - zones:
+          - zone: .
+            use_tcp: true
+        port: 53
+        plugins:
+          - name: errors
+          - name: health
+            configBlock: |-
+              lameduck 10s
+          - name: ready
+          - name: kubernetes
+            parameters: cluster.local in-addr.arpa ip6.arpa
+            configBlock: |-
+              pods insecure
+              fallthrough in-addr.arpa ip6.arpa
+              ttl 30
+          - name: prometheus
+            parameters: 0.0.0.0:9153
+          - name: forward
+            parameters: . /etc/resolv.conf
+          - name: cache
+            parameters: 30
+          - name: loop
+          - name: reload
+          - name: loadbalance
+      - zones:
+          - zone: ethos.home.
+            use_tcp: true
+        port: 53
+        plugins:
+          - name: errors
+          - name: forward
+            parameters: . 192.168.50.1
+          - name: cache
+            parameters: 30
