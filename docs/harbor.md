@@ -11,7 +11,11 @@ Trivy 5, Redis 1, job logs 1. The servers' Longhorn disks are the limit
 The servers trust the lab CA for pulls from it: `scripts/node-trust.sh`
 (2026-10-28; files in `clusters/core/nodes/`, no RKE2 restart needed).
 
-Not done yet: a `blt` project and robot accounts, proxy-cache projects, and the source-address
+Project `blt` (private) holds blt's images, with robots `push` (the
+build machine) and `pull` (the cluster) - `scripts/harbor-blt-project.sh`,
+`scripts/push-images.sh` (2026-10-28).
+
+Not done yet: proxy-cache projects, and the source-address
 allow-list below (Traefik's LoadBalancer uses externalTrafficPolicy
 Cluster, so it does not see client addresses - it needs Local first).
 

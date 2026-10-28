@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Copy images built on this machine into every core node's containerd,
-# for as long as there is no registry (Harbor) to pull them from.
+# without a registry. Harbor is the normal route now (scripts/push-images.sh);
+# this stays as the fallback for when Harbor itself is down.
 #
 #   scripts/load-images.sh localhost/blt-api:422c54a localhost/blt-prefect-server:422c54a ...
 #

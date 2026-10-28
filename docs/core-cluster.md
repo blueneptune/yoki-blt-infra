@@ -82,7 +82,7 @@ The fix was in its Ansible vars (the `ethos.home` entry removed from
 
 ## Deploying a new blt version
 
-No registry yet, so images go straight to the servers:
+Images go through Harbor (`registry.blt.lab.ethos.home/blt/...`):
 
 ```
 cd ../blt-v5-poc && TAG=$(git rev-parse --short HEAD)
@@ -90,10 +90,16 @@ podman build -t localhost/blt-api:$TAG -f Containerfile .
 podman build -t localhost/blt-prefect-server:$TAG -f deploy/prefect/server/Containerfile .
 podman build -t localhost/blt-prefect-worker:$TAG -f deploy/prefect/worker/Containerfile .
 cd ../yoki-blt-infra
-scripts/load-images.sh localhost/blt-api:$TAG localhost/blt-prefect-server:$TAG localhost/blt-prefect-worker:$TAG
+scripts/push-images.sh $TAG
 # set newTag in clusters/core/blt/kustomization.yaml to $TAG, then
 kubectl apply -k clusters/core/blt
 ```
+
+`scripts/harbor-blt-project.sh` made the `blt` project, logged podman in
+with its push robot and gave the cluster its pull secret; re-run it on a
+new build machine, or to rotate both robots' secrets.
+(`scripts/load-images.sh`, copying images onto each server, is the
+fallback for when Harbor is down.)
 
 Secrets (`scripts/postgres-secrets.sh`, `scripts/blt-secrets.sh`) are
 made once; re-run `blt-secrets.sh` after changing `blt.env`.
