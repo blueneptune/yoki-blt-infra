@@ -60,6 +60,23 @@ export KUBECONFIG=~/.kube/blt-core.yaml
 
 Use a `kubectl` of the same minor version as the cluster (1.36).
 
+## DNS
+
+The nodes, and so the pods (CoreDNS forwards to the nodes'
+`/etc/resolv.conf`), ask two servers, picking one at random:
+
+- 192.168.50.1, the Firewalla: owns `ethos.home` (cv-toaster, eth00dev1, ...)
+  and sends `lab.ethos.home` to 192.168.51.3.
+- 192.168.51.3, CoreDNS on the lab side: owns `lab.ethos.home` (ca, the
+  nodes, `*.blt.lab.ethos.home`) and sends everything else, `ethos.home`
+  included, to the Firewalla.
+
+Both must give the same answer for every name. Until 2026-10-28,
+192.168.51.3 also claimed `ethos.home` and answered "no such name" for
+cv-toaster, so about half the collections failed to find the CommServe.
+The fix was in its Ansible vars (the `ethos.home` entry removed from
+`coredns_zones`), not in the cluster.
+
 ## Deploying a new blt version
 
 No registry yet, so images go straight to the servers:
