@@ -1,7 +1,8 @@
 # blt's own services: the API, the Prefect server and one Prefect worker.
-# Images are built from blt-v5-poc and copied to the nodes by
-# scripts/load-images.sh (no registry yet), so they are never pulled; the
-# tag is the blt commit, set in kustomization.yaml.
+# Images are built from blt-v5-poc and pushed to Harbor
+# (scripts/push-images.sh); pods pull them with the blt namespace's
+# default service account (serviceaccount.yaml). The tag is set in
+# kustomization.yaml.
 # Secrets: blt-app (scripts/blt-secrets.sh), blt-pg-prefect
 # (scripts/postgres-secrets.sh). Postgres: postgres.yaml.
 apiVersion: apps/v1
@@ -20,7 +21,7 @@ spec:
       containers:
         - name: api
           image: localhost/blt-api
-          imagePullPolicy: Never
+          imagePullPolicy: IfNotPresent
           env:
             - name: BLT_API_KEY
               valueFrom: {secretKeyRef: {name: blt-app, key: BLT_API_KEY}}
@@ -58,7 +59,7 @@ spec:
       containers:
         - name: server
           image: localhost/blt-prefect-server
-          imagePullPolicy: Never
+          imagePullPolicy: IfNotPresent
           env:
             - {name: PG_HOST, value: blt-pg-rw.blt.svc}
             - {name: PG_PORT, value: "5432"}
@@ -104,7 +105,7 @@ spec:
       containers:
         - name: worker
           image: localhost/blt-prefect-worker
-          imagePullPolicy: Never
+          imagePullPolicy: IfNotPresent
           env:
             - {name: PREFECT_API_URL, value: "http://prefect-server.blt.svc:4200/api"}
             - {name: BLT_API_URL, value: "http://blt-api.blt.svc:8000"}

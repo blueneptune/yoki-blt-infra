@@ -1,11 +1,13 @@
 # kubectl apply -k clusters/core/blt
-# newTag: the blt-v5-poc commit the images were built from.
+# newTag: the blt-v5-poc commit (later: the release) the images were built
+# from, as pushed to Harbor by scripts/push-images.sh.
 resources:
   - namespace.yaml
   - postgres.yaml
+  - serviceaccount.yaml
   - apps.yaml
   - ingress.yaml
 images:
-  - {name: localhost/blt-api, newTag: 422c54a}
-  - {name: localhost/blt-prefect-server, newTag: 422c54a}
-  - {name: localhost/blt-prefect-worker, newTag: 422c54a}
+  - {name: localhost/blt-api, newName: registry.blt.lab.ethos.home/blt/api, newTag: 422c54a}
+  - {name: localhost/blt-prefect-server, newName: registry.blt.lab.ethos.home/blt/prefect-server, newTag: 422c54a}
+  - {name: localhost/blt-prefect-worker, newName: registry.blt.lab.ethos.home/blt/prefect-worker, newTag: 422c54a}

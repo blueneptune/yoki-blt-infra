@@ -1,0 +1,8 @@
+# /data/rke2/agent/etc/containerd/certs.d/registry.blt.lab.ethos.home/hosts.toml
+# What RKE2 writes from registries.yaml at its next start; containerd reads
+# it on every pull, so writing it ourselves takes effect at once.
+server = "https://registry.blt.lab.ethos.home"
+
+[host."https://registry.blt.lab.ethos.home"]
+  capabilities = ["pull", "resolve"]
+  ca = ["/etc/rancher/rke2/ethos-home-root-ca.crt"]

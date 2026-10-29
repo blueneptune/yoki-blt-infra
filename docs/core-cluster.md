@@ -12,7 +12,9 @@ differs, this page is right.
 | `blt-core-02.lab.ethos.home` | 192.168.51.22 | control plane, etcd, workloads |
 | `blt-core-03.lab.ethos.home` | 192.168.51.23 | control plane, etcd, workloads |
 
-Rocky Linux 9.8, 4 vCPU and 16 GB each, SELinux enforcing. SSH as
+Rocky Linux 9.8, 4 vCPU and 16 GB each, SELinux enforcing. Disks: 60 GiB
+system, 200 GiB `/data/rke2` (sdb), 200 GiB Longhorn (sdc) - both LVM, grown
+from 100 GiB on 2026-10-28 (`pvresize` + `lvextend -r`, online). SSH as
 `blue` (key only), passwordless sudo.
 
 | Address | What |
@@ -29,7 +31,8 @@ Not by `scripts/install-rke2-server.sh` - that branch
 - **RKE2** v1.36.5+rke2r1, Canal networking, data under `/data/rke2`.
 - **kube-vip** v1.3.1, API address and LoadBalancer services, on `ens192`.
 - **Traefik** (RKE2's own), the default ingress class.
-- **Longhorn** 1.9.2, 100 GiB per server at `/var/lib/longhorn`, three
+- **Longhorn** 1.9.2, 200 GiB per server at `/var/lib/longhorn` (30 GiB
+  held back), three
   copies by default (storage class `longhorn`, the default).
 - **Rancher** 2.15 at `rancher.blt.lab.ethos.home`, and the Longhorn UI
   at `longhorn.blt.lab.ethos.home`. The owner's; blt does not touch them.
@@ -60,9 +63,26 @@ export KUBECONFIG=~/.kube/blt-core.yaml
 
 Use a `kubectl` of the same minor version as the cluster (1.36).
 
+## DNS
+
+The nodes, and so the pods (CoreDNS forwards to the nodes'
+`/etc/resolv.conf`), ask two servers, picking one at random:
+
+- 192.168.50.1, the Firewalla: owns `ethos.home` (cv-toaster, eth00dev1, ...)
+  and sends `lab.ethos.home` to 192.168.51.3.
+- 192.168.51.3, CoreDNS on the lab side: owns `lab.ethos.home` (ca, the
+  nodes, `*.blt.lab.ethos.home`) and sends everything else, `ethos.home`
+  included, to the Firewalla.
+
+Both must give the same answer for every name. Until 2026-10-28,
+192.168.51.3 also claimed `ethos.home` and answered "no such name" for
+cv-toaster, so about half the collections failed to find the CommServe.
+The fix was in its Ansible vars (the `ethos.home` entry removed from
+`coredns_zones`), not in the cluster.
+
 ## Deploying a new blt version
 
-No registry yet, so images go straight to the servers:
+Images go through Harbor (`registry.blt.lab.ethos.home/blt/...`):
 
 ```
 cd ../blt-v5-poc && TAG=$(git rev-parse --short HEAD)
@@ -70,10 +90,16 @@ podman build -t localhost/blt-api:$TAG -f Containerfile .
 podman build -t localhost/blt-prefect-server:$TAG -f deploy/prefect/server/Containerfile .
 podman build -t localhost/blt-prefect-worker:$TAG -f deploy/prefect/worker/Containerfile .
 cd ../yoki-blt-infra
-scripts/load-images.sh localhost/blt-api:$TAG localhost/blt-prefect-server:$TAG localhost/blt-prefect-worker:$TAG
+scripts/push-images.sh $TAG
 # set newTag in clusters/core/blt/kustomization.yaml to $TAG, then
 kubectl apply -k clusters/core/blt
 ```
+
+`scripts/harbor-blt-project.sh` made the `blt` project, logged podman in
+with its push robot and gave the cluster its pull secret; re-run it on a
+new build machine, or to rotate both robots' secrets.
+(`scripts/load-images.sh`, copying images onto each server, is the
+fallback for when Harbor is down.)
 
 Secrets (`scripts/postgres-secrets.sh`, `scripts/blt-secrets.sh`) are
 made once; re-run `blt-secrets.sh` after changing `blt.env`.
