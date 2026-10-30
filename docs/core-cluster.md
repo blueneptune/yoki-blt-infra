@@ -85,7 +85,7 @@ The fix was in its Ansible vars (the `ethos.home` entry removed from
 Images go through Harbor (`registry.blt.lab.ethos.home/blt/...`):
 
 ```
-cd ../blt-v5-poc && TAG=2026.10.30.1 && git checkout $TAG     # the release tag (README, Releases)
+cd ../blt-v5-poc && TAG=2026.10.30.2 && git checkout $TAG     # the release tag (README, Releases)
 podman build -t localhost/blt-api:$TAG -f Containerfile .
 podman build -t localhost/blt-prefect-server:$TAG -f deploy/prefect/server/Containerfile .
 podman build -t localhost/blt-prefect-worker:$TAG -f deploy/prefect/worker/Containerfile .
