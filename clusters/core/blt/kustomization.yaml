@@ -8,6 +8,6 @@ resources:
   - apps.yaml
   - ingress.yaml
 images:
-  - {name: localhost/blt-api, newName: registry.blt.lab.ethos.home/blt/api, newTag: 2026.10.30.1}
-  - {name: localhost/blt-prefect-server, newName: registry.blt.lab.ethos.home/blt/prefect-server, newTag: 2026.10.30.1}
-  - {name: localhost/blt-prefect-worker, newName: registry.blt.lab.ethos.home/blt/prefect-worker, newTag: 2026.10.30.1}
+  - {name: localhost/blt-api, newName: registry.blt.lab.ethos.home/blt/api, newTag: 2026.10.30.2}
+  - {name: localhost/blt-prefect-server, newName: registry.blt.lab.ethos.home/blt/prefect-server, newTag: 2026.10.30.2}
+  - {name: localhost/blt-prefect-worker, newName: registry.blt.lab.ethos.home/blt/prefect-worker, newTag: 2026.10.30.2}
