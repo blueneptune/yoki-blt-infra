@@ -13,7 +13,7 @@ REGISTRY="${REGISTRY:-registry.blt.lab.ethos.home}"
 [[ $# -eq 1 ]] || { echo "usage: $0 TAG" >&2; exit 64; }
 tag="$1"
 
-for name in api prefect-server prefect-worker; do
+for name in api prefect-server prefect-worker ui; do
     target="$REGISTRY/blt/$name:$tag"
     podman tag "localhost/blt-$name:$tag" "$target"
     podman push -q "$target"

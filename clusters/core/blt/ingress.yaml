@@ -1,4 +1,4 @@
-# The two names blt answers on, through Traefik, with certificates from
+# The names blt answers on, through Traefik, with certificates from
 # the lab's step-ca (ClusterIssuer step-ca, issued and renewed by
 # cert-manager). DNS: *.blt.lab.ethos.home points at Traefik.
 apiVersion: networking.k8s.io/v1
@@ -16,6 +16,8 @@ spec:
       secretName: blt-api-tls
     - hosts: [prefect.blt.lab.ethos.home]
       secretName: prefect-tls
+    - hosts: [ui.blt.lab.ethos.home]
+      secretName: blt-ui-tls
   rules:
     - host: api.blt.lab.ethos.home
       http:
@@ -25,3 +27,7 @@ spec:
       http:
         paths:
           - {path: /, pathType: Prefix, backend: {service: {name: prefect-server, port: {name: http}}}}
+    - host: ui.blt.lab.ethos.home
+      http:
+        paths:
+          - {path: /, pathType: Prefix, backend: {service: {name: blt-ui, port: {name: http}}}}

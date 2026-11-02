@@ -82,13 +82,16 @@ The fix was in its Ansible vars (the `ethos.home` entry removed from
 
 ## Deploying a new blt version
 
+blt answers on `api.`, `prefect.` and (since 2026.11.02) `ui.blt.lab.ethos.home`.
+
 Images go through Harbor (`registry.blt.lab.ethos.home/blt/...`):
 
 ```
-cd ../blt-v5-poc && TAG=2026.10.30.3 && git checkout $TAG     # the release tag (README, Releases)
+cd ../blt-v5-poc && TAG=2026.11.02 && git checkout $TAG     # the release tag (README, Releases)
 podman build -t localhost/blt-api:$TAG -f Containerfile .
 podman build -t localhost/blt-prefect-server:$TAG -f deploy/prefect/server/Containerfile .
 podman build -t localhost/blt-prefect-worker:$TAG -f deploy/prefect/worker/Containerfile .
+podman build -t localhost/blt-ui:$TAG -f ui/Containerfile ui
 cd ../yoki-blt-infra
 scripts/push-images.sh $TAG
 # set newTag in clusters/core/blt/kustomization.yaml to $TAG, then

@@ -1,0 +1,41 @@
+# blt's web UI (blt-v5-poc ui/): SvelteKit's Node server. It calls the API
+# from its own server side with the same key the worker uses (blt-app),
+# so the key never reaches a browser. No sign-in yet - the lab only
+# (blt-v5-poc docs/ui.md). The tag is set in kustomization.yaml.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: blt-ui
+  namespace: blt
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: blt-ui}}
+  template:
+    metadata: {labels: {app: blt-ui}}
+    spec:
+      containers:
+        - name: ui
+          image: localhost/blt-ui
+          imagePullPolicy: IfNotPresent
+          env:
+            - {name: BLT_API_URL, value: "http://blt-api.blt.svc:8000"}
+            - name: BLT_API_KEY
+              valueFrom: {secretKeyRef: {name: blt-app, key: BLT_API_KEY}}
+            # Its public address, so SvelteKit accepts form posts behind Traefik.
+            - {name: ORIGIN, value: "https://ui.blt.lab.ethos.home"}
+          ports: [{name: http, containerPort: 3000}]
+          readinessProbe:
+            httpGet: {path: /healthz, port: http}
+            periodSeconds: 10
+          resources:
+            requests: {cpu: 50m, memory: 128Mi}
+            limits: {memory: 256Mi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: blt-ui
+  namespace: blt
+spec:
+  selector: {app: blt-ui}
+  ports: [{name: http, port: 3000, targetPort: http}]
