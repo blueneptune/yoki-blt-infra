@@ -6,8 +6,10 @@ resources:
   - postgres.yaml
   - serviceaccount.yaml
   - apps.yaml
+  - ui.yaml
   - ingress.yaml
 images:
-  - {name: localhost/blt-api, newName: registry.blt.lab.ethos.home/blt/api, newTag: 2026.10.30.3}
-  - {name: localhost/blt-prefect-server, newName: registry.blt.lab.ethos.home/blt/prefect-server, newTag: 2026.10.30.3}
-  - {name: localhost/blt-prefect-worker, newName: registry.blt.lab.ethos.home/blt/prefect-worker, newTag: 2026.10.30.3}
+  - {name: localhost/blt-api, newName: registry.blt.lab.ethos.home/blt/api, newTag: 2026.11.02}
+  - {name: localhost/blt-prefect-server, newName: registry.blt.lab.ethos.home/blt/prefect-server, newTag: 2026.11.02}
+  - {name: localhost/blt-prefect-worker, newName: registry.blt.lab.ethos.home/blt/prefect-worker, newTag: 2026.11.02}
+  - {name: localhost/blt-ui, newName: registry.blt.lab.ethos.home/blt/ui, newTag: 2026.11.02}
