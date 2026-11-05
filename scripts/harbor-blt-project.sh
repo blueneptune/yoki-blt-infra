@@ -6,7 +6,9 @@
 #   scripts/harbor-blt-project.sh
 #
 # - robot "push" (push + pull): podman on this machine logs in with it
-#   (stored in podman's auth file, ${XDG_RUNTIME_DIR}/containers/auth.json).
+#   (stored in ~/.config/containers/auth.json, mode 0600: podman's default,
+#   ${XDG_RUNTIME_DIR}/containers/auth.json, is lost at every reboot, and
+#   podman falls back to this file when reading).
 # - robot "pull" (pull only):   Secret blt/harbor-pull, which the blt
 #   namespace's default service account uses for every pod.
 #
@@ -62,7 +64,7 @@ for r in json.load(sys.stdin):
 field() { python3 -c 'import json,sys; print(json.load(sys.stdin)[sys.argv[1]])' "$1"; }
 
 push="$(make_robot push push pull)"
-field secret <<<"$push" | podman login --username "$(field name <<<"$push")" --password-stdin "$REGISTRY" >/dev/null
+field secret <<<"$push" | podman login --authfile "$HOME/.config/containers/auth.json" --username "$(field name <<<"$push")" --password-stdin "$REGISTRY" >/dev/null
 echo "robot push: podman on $(hostname -s) is logged in to $REGISTRY"
 
 pull="$(make_robot pull pull)"
