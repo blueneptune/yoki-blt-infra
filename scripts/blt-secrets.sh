@@ -7,7 +7,9 @@
 #   KUBECONFIG=~/.kube/blt-core.yaml scripts/blt-secrets.sh ~/development/blt-v5-poc/config/blt.env
 #
 #   blt-app      BLT_API_KEY, BLT_DATABASE_URL (to blt-pg-rw), PREFECT_AUTH
-#                (the Prefect UI/API login, user:password)
+#                (the Prefect API login, user:password)
+#   blt-ui       BLT_UI_PASSWORD_HASH, BLT_UI_SESSION_SECRET - the UI's
+#                sign-in (in blt-v5-poc: cd ui && npm run --silent password -- --secret)
 set -euo pipefail
 
 NAMESPACE=blt
@@ -35,3 +37,9 @@ kubectl -n "$NAMESPACE" create secret generic blt-app \
     --from-literal=BLT_DATABASE_URL="postgresql+psycopg://blt:${db_password}@blt-pg-rw.${NAMESPACE}.svc:5432/blt" \
     --dry-run=client -o yaml | kubectl apply -f - >/dev/null
 echo "blt-app: applied"
+
+kubectl -n "$NAMESPACE" create secret generic blt-ui \
+    --from-literal=BLT_UI_PASSWORD_HASH="$(from_env BLT_UI_PASSWORD_HASH)" \
+    --from-literal=BLT_UI_SESSION_SECRET="$(from_env BLT_UI_SESSION_SECRET)" \
+    --dry-run=client -o yaml | kubectl apply -f - >/dev/null
+echo "blt-ui: applied"

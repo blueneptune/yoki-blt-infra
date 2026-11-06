@@ -1,7 +1,8 @@
 # blt's web UI (blt-v5-poc ui/): SvelteKit's Node server. It calls the API
 # from its own server side with the same key the worker uses (blt-app),
-# so the key never reaches a browser. No sign-in yet - the lab only
-# (blt-v5-poc docs/ui.md). The tag is set in kustomization.yaml.
+# so the key never reaches a browser. One admin account signs in, its
+# password hash and session secret in blt-ui (scripts/blt-secrets.sh;
+# blt-v5-poc docs/admin.md). The tag is set in kustomization.yaml.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -21,6 +22,10 @@ spec:
             - {name: BLT_API_URL, value: "http://blt-api.blt.svc:8000"}
             - name: BLT_API_KEY
               valueFrom: {secretKeyRef: {name: blt-app, key: BLT_API_KEY}}
+            - name: BLT_UI_PASSWORD_HASH
+              valueFrom: {secretKeyRef: {name: blt-ui, key: BLT_UI_PASSWORD_HASH}}
+            - name: BLT_UI_SESSION_SECRET
+              valueFrom: {secretKeyRef: {name: blt-ui, key: BLT_UI_SESSION_SECRET}}
             # Its public address, so SvelteKit accepts form posts behind Traefik.
             - {name: ORIGIN, value: "https://ui.blt.lab.ethos.home"}
           ports: [{name: http, containerPort: 3000}]

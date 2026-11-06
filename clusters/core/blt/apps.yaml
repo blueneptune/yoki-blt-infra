@@ -27,6 +27,10 @@ spec:
               valueFrom: {secretKeyRef: {name: blt-app, key: BLT_API_KEY}}
             - name: BLT_DATABASE_URL
               valueFrom: {secretKeyRef: {name: blt-app, key: BLT_DATABASE_URL}}
+            # For the UI's Administration pages (blt-v5-poc docs/admin.md).
+            - {name: BLT_PREFECT_API_URL, value: "http://prefect-server.blt.svc:4200/api"}
+            - name: BLT_PREFECT_AUTH
+              valueFrom: {secretKeyRef: {name: blt-app, key: PREFECT_AUTH}}
           ports: [{name: http, containerPort: 8000}]
           readinessProbe:
             tcpSocket: {port: http}
@@ -65,7 +69,8 @@ spec:
             - {name: PG_PORT, value: "5432"}
             - {name: PREFECT_LISTEN_HOST, value: 0.0.0.0}
             - {name: PREFECT_LISTEN_PORT, value: "4200"}
-            - {name: PREFECT_SERVER_UI_API_URL, value: /api}
+            # No Prefect UI: blt's UI manages sources, schedules and runs.
+            - {name: PREFECT_SERVER_UI_ENABLED, value: "false"}
             - {name: PREFECT_SERVER_ANALYTICS_ENABLED, value: "false"}
             # No POSTGRES_PASSWORD: the operator owns the prefect role and
             # database, so start.py only connects.
