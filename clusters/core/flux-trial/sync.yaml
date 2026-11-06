@@ -1,0 +1,14 @@
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: flux-trial
+  namespace: flux-system
+spec:
+  sourceRef: {kind: GitRepository, name: yoki-blt-infra}
+  path: ./clusters/core/flux-trial/app
+  interval: 1m
+  # Objects taken out of git are taken out of the cluster - only ones
+  # Flux made; secrets made by scripts are never touched.
+  prune: true
+  wait: true
+  timeout: 2m

@@ -1,0 +1,8 @@
+# The Flux trial: Flux reads this repo (public, so no credentials) and
+# keeps clusters/core/flux-trial/app applied. Nothing of blt's is in it.
+# Applied once by hand; after that, changes go through git.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - source.yaml
+  - sync.yaml

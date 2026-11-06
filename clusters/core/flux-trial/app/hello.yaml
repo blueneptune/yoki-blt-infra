@@ -1,0 +1,84 @@
+# A page that says which version of it git holds, at
+# https://flux-trial.blt.lab.ethos.home. Change the text or the replicas
+# here, push, and Flux applies it within a minute or two.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: flux-trial
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hello
+  namespace: flux-trial
+data:
+  index.html: |
+    <!doctype html>
+    <title>Flux trial</title>
+    <h1>Flux trial: version 1</h1>
+    <p>Applied by Flux from yoki-blt-infra, clusters/core/flux-trial/app.</p>
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello
+  namespace: flux-trial
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: hello}
+  template:
+    metadata:
+      labels: {app: hello}
+      annotations:
+        # Bump with the page, so a new text restarts the pods.
+        flux-trial/version: "1"
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: nginx
+          image: docker.io/nginxinc/nginx-unprivileged:1.29-alpine
+          ports:
+            - {name: http, containerPort: 8080}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+          resources:
+            requests: {cpu: 10m, memory: 16Mi}
+            limits: {memory: 64Mi}
+          volumeMounts:
+            - {name: page, mountPath: /usr/share/nginx/html}
+      volumes:
+        - name: page
+          configMap: {name: hello}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello
+  namespace: flux-trial
+spec:
+  selector: {app: hello}
+  ports:
+    - {name: http, port: 80, targetPort: http}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: hello
+  namespace: flux-trial
+  annotations:
+    cert-manager.io/cluster-issuer: step-ca
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts: [flux-trial.blt.lab.ethos.home]
+      secretName: hello-tls
+  rules:
+    - host: flux-trial.blt.lab.ethos.home
+      http:
+        paths:
+          - {path: /, pathType: Prefix, backend: {service: {name: hello, port: {name: http}}}}

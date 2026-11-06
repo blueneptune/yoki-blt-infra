@@ -1,0 +1,9 @@
+# Flux v2.10.0: the controllers that keep the cluster matching this repo.
+# gotk-components.yaml is generated, not edited:
+#   flux install --export --components=source-controller,kustomize-controller,notification-controller \
+#     > clusters/core/flux-system/gotk-components.yaml
+# (the flux CLI's version picks Flux's). docs/flux.md has the why and how.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - gotk-components.yaml

@@ -1,0 +1,10 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: yoki-blt-infra
+  namespace: flux-system
+spec:
+  url: https://github.com/blueneptune/yoki-blt-infra.git
+  # The trial follows its own branch; main once Flux looks after blt.
+  ref: {branch: F/Flux_trial}
+  interval: 1m
