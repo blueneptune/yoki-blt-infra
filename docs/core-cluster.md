@@ -89,7 +89,7 @@ first deploy with them, add the sign-in to `blt.env` and re-run
 `scripts/blt-secrets.sh` (it makes the `blt-ui` secret):
 
 ```
-cd ../blt-v5-poc/ui && npm run password -- --secret >> ../config/blt.env
+cd ../blt-v5-poc/ui && npm run --silent password -- --secret >> ../config/blt.env
 ```
 
 Images go through Harbor (`registry.blt.lab.ethos.home/blt/...`):

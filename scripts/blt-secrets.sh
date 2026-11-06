@@ -9,7 +9,7 @@
 #   blt-app      BLT_API_KEY, BLT_DATABASE_URL (to blt-pg-rw), PREFECT_AUTH
 #                (the Prefect API login, user:password)
 #   blt-ui       BLT_UI_PASSWORD_HASH, BLT_UI_SESSION_SECRET - the UI's
-#                sign-in (in blt-v5-poc: cd ui && npm run password -- --secret)
+#                sign-in (in blt-v5-poc: cd ui && npm run --silent password -- --secret)
 set -euo pipefail
 
 NAMESPACE=blt
