@@ -1,6 +1,8 @@
 # The names blt answers on, through Traefik, with certificates from
 # the lab's step-ca (ClusterIssuer step-ca, issued and renewed by
 # cert-manager). DNS: *.blt.lab.ethos.home points at Traefik.
+# prefect. serves Prefect's API only (its UI is off), for the
+# blt-prefect-* tools (blt-v5-poc scripts/use-cluster.sh).
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:

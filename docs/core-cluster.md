@@ -83,6 +83,14 @@ The fix was in its Ansible vars (the `ethos.home` entry removed from
 ## Deploying a new blt version
 
 blt answers on `api.`, `prefect.` and (since 2026.11.02) `ui.blt.lab.ethos.home`.
+Since blt's sign-in and Administration pages (2026-11-05), `ui.` asks for
+a password and `prefect.` serves Prefect's API only, no UI. Before the
+first deploy with them, add the sign-in to `blt.env` and re-run
+`scripts/blt-secrets.sh` (it makes the `blt-ui` secret):
+
+```
+cd ../blt-v5-poc/ui && npm run password -- --secret >> ../config/blt.env
+```
 
 Images go through Harbor (`registry.blt.lab.ethos.home/blt/...`):
 
