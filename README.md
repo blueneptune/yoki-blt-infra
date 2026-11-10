@@ -35,13 +35,16 @@ clusters/
     rke2/        RKE2 configuration for the core servers
     addons/      platform pieces, as HelmChart manifests RKE2 applies itself:
                  kube-vip, cert-manager, Longhorn, CloudNativePG
+  location/      blt-collector: the base for a location's collector (docs/location-cluster.md)
+  lab-location/  an example location's overlay
   proxy/         (later)
 apps/
   base/          blt API, Prefect server and worker, Postgres - per app
   overlays/      per cluster: core-dev first, then production, proxy
 scripts/         installing RKE2 on a server, joining one, getting kubectl access
 docs/            servers.md (what to ask for), lab-prerequisites.md,
-                 core-cluster.md (the lab cluster as built), runbooks
+                 core-cluster.md (the lab cluster as built), location-cluster.md
+                 (a location's collector cluster), runbooks
 ```
 
 - **Kustomize** for our own applications, **Helm** for third-party ones -

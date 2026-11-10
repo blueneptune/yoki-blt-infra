@@ -1,0 +1,52 @@
+# The collector: blt's worker image as a remote collector (BLT_COLLECTOR),
+# taking its own work queue of core's Prefect pool `blt`. Two replicas are
+# safe: since blt 2026.11.10 the per-source locks and the Commvault token
+# renewals are held in Prefect, not in a pod's temp directory, so two
+# workers never run one source at once (blt.flows.locks).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: blt-collector
+  namespace: blt-collector
+spec:
+  replicas: 2
+  selector: {matchLabels: {app: blt-collector}}
+  template:
+    metadata: {labels: {app: blt-collector}}
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector: {matchLabels: {app: blt-collector}}
+      containers:
+        - name: collector
+          image: localhost/blt-prefect-worker
+          imagePullPolicy: IfNotPresent
+          env:
+            # The location's name: its work queue, and what its sources'
+            # Collector is set to in Administration -> Sources. An overlay
+            # sets it (collector-name.yaml).
+            - {name: BLT_COLLECTOR, value: "set-me"}
+            # Core's ingresses (docs/location-cluster.md, "Firewall").
+            - {name: PREFECT_API_URL, value: "https://prefect.blt.lab.ethos.home/api"}
+            - {name: BLT_API_URL, value: "https://api.blt.lab.ethos.home"}
+            - {name: BLT_MAX_PARALLEL, value: "4"}
+            - {name: DO_NOT_TRACK, value: "1"}
+            # Trust core's CA, for Prefect's client and blt's own.
+            - {name: SSL_CERT_FILE, value: /etc/blt/core-ca.crt}
+            - {name: PREFECT_API_SSL_CERT_FILE, value: /etc/blt/core-ca.crt}
+            - name: PREFECT_API_AUTH_STRING
+              valueFrom: {secretKeyRef: {name: blt-collector, key: PREFECT_AUTH}}
+            - name: BLT_API_KEY
+              valueFrom: {secretKeyRef: {name: blt-collector, key: BLT_API_KEY}}
+          volumeMounts:
+            - {name: core-ca, mountPath: /etc/blt, readOnly: true}
+          resources:
+            requests: {cpu: 200m, memory: 512Mi}
+            limits: {memory: 2Gi}
+      volumes:
+        - name: core-ca
+          configMap: {name: core-ca}

@@ -1,0 +1,11 @@
+# An example location: the lab's, named "lab". Copy this directory for a
+# real one (clusters/omaha/blt-collector, ...) and change the name.
+#   kubectl apply -k clusters/lab-location/blt-collector
+resources:
+  - ../../location/blt-collector
+patches:
+  - target: {kind: Deployment, name: blt-collector}
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/env/0/value
+        value: lab

@@ -1,0 +1,26 @@
+# A location's blt collector: a Prefect worker in a small cluster inside
+# that location's network, taking the runs for the sources only it can
+# reach, straight to core's ingresses - no tunnel (docs/location-cluster.md).
+#
+# One overlay per location sets the collector's name and core's addresses:
+#   clusters/<location>/blt-collector/kustomization.yaml
+#     resources: [../../location/blt-collector]
+#     patches: [{path: collector-name.yaml}]
+#     images: [{name: localhost/blt-prefect-worker, newName: ..., newTag: ...}]
+#
+# The Secret blt-collector is made by scripts/collector-secrets.sh, never kept here.
+resources:
+  - namespace.yaml
+  - serviceaccount.yaml
+  - collector.yaml
+configMapGenerator:
+  # The CA that signed core's *.blt certificates (a copy of
+  # clusters/core/addons/cert-manager/ethos-home-root-ca.crt), so the collector trusts
+  # core's ingresses. A public certificate: no secret in it.
+  - name: core-ca
+    namespace: blt-collector
+    files: [core-ca.crt]
+generatorOptions:
+  disableNameSuffixHash: true
+images:
+  - {name: localhost/blt-prefect-worker, newName: registry.blt.lab.ethos.home/blt/prefect-worker, newTag: 2026.11.09.2}
