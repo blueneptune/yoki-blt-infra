@@ -48,6 +48,21 @@ spec:
   selector: {app: blt-api}
   ports: [{name: http, port: 8000, targetPort: http}]
 ---
+# The Prefect server's leases on the collection slots, so a restart does
+# not forget who holds them (blt 2026.11.09.2: before, a restart left the
+# slots taken by runs that were gone, and every run after waited for one).
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: prefect-home
+  namespace: blt
+spec:
+  accessModes: [ReadWriteOnce]
+  # As blt-pg: one replica is enough for what a restart needs.
+  storageClassName: longhorn-single
+  resources:
+    requests: {storage: 1Gi}
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -79,12 +94,18 @@ spec:
             - name: PREFECT_SERVER_API_AUTH_STRING
               valueFrom: {secretKeyRef: {name: blt-app, key: PREFECT_AUTH}}
           ports: [{name: http, containerPort: 4200}]
+          # PREFECT_HOME in the image; the leases are kept under it.
+          volumeMounts:
+            - {name: prefect-home, mountPath: /var/lib/prefect}
           readinessProbe:
             httpGet: {path: /api/health, port: http}
             periodSeconds: 10
           resources:
             requests: {cpu: 200m, memory: 512Mi}
             limits: {memory: 1Gi}
+      volumes:
+        - name: prefect-home
+          persistentVolumeClaim: {claimName: prefect-home}
 ---
 apiVersion: v1
 kind: Service
