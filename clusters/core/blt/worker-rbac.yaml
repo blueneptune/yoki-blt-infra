@@ -1,0 +1,48 @@
+# The Prefect worker on a Kubernetes work pool (blt-v5-poc
+# docs/kubernetes.md): it starts each flow run as a Job in this namespace
+# and watches it to the end. Only here: the observer is limited to blt
+# (PREFECT_INTEGRATIONS_KUBERNETES_OBSERVER_NAMESPACES in apps.yaml).
+# The run pods themselves use the namespace's default service account
+# (serviceaccount.yaml), which can do nothing in the cluster.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prefect-worker
+  namespace: blt
+imagePullSecrets:
+  - name: harbor-pull
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: prefect-worker
+  namespace: blt
+rules:
+  - apiGroups: [batch]
+    resources: [jobs]
+    verbs: [create, get, list, watch, delete, patch]
+  # pods get: the worker also reads its own pod, for the image the run
+  # pods use.
+  - apiGroups: [""]
+    resources: [pods]
+    verbs: [get, list, watch]
+  - apiGroups: [""]
+    resources: [pods/log]
+    verbs: [get]
+  - apiGroups: [""]
+    resources: [events]
+    verbs: [get, list, watch, create, patch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: prefect-worker
+  namespace: blt
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: prefect-worker
+subjects:
+  - kind: ServiceAccount
+    name: prefect-worker
+    namespace: blt

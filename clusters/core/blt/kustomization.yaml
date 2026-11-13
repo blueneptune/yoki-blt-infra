@@ -5,6 +5,7 @@ resources:
   - namespace.yaml
   - postgres.yaml
   - serviceaccount.yaml
+  - worker-rbac.yaml
   - apps.yaml
   - ui.yaml
   - ingress.yaml

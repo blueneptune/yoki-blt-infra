@@ -1,4 +1,5 @@
-# blt's own services: the API, the Prefect server and one Prefect worker.
+# blt's own services: the API, the Prefect server and one Prefect worker,
+# which starts each flow run as a pod of its own (worker-rbac.yaml).
 # Images are built from blt-v5-poc and pushed to Harbor
 # (scripts/push-images.sh); pods pull them with the blt namespace's
 # default service account (serviceaccount.yaml). The tag is set in
@@ -29,6 +30,8 @@ spec:
               valueFrom: {secretKeyRef: {name: blt-app, key: BLT_DATABASE_URL}}
             # For the UI's Administration pages (blt-v5-poc docs/admin.md).
             - {name: BLT_PREFECT_API_URL, value: "http://prefect-server.blt.svc:4200/api"}
+            # The worker's pool: Run now and the Administration pages use it.
+            - {name: BLT_WORK_POOL, value: blt-k8s}
             - name: BLT_PREFECT_AUTH
               valueFrom: {secretKeyRef: {name: blt-app, key: PREFECT_AUTH}}
           ports: [{name: http, containerPort: 8000}]
@@ -128,11 +131,23 @@ spec:
   template:
     metadata: {labels: {app: prefect-worker}}
     spec:
+      # May start Jobs in blt (worker-rbac.yaml).
+      serviceAccountName: prefect-worker
       containers:
         - name: worker
           image: localhost/blt-prefect-worker
           imagePullPolicy: IfNotPresent
           env:
+            # Each flow run a pod of its own, from this image (blt-v5-poc
+            # docs/kubernetes.md). A new pool: a pool's type cannot change,
+            # and the old process pool "blt" is left unused.
+            - {name: BLT_WORKER_TYPE, value: kubernetes}
+            - {name: BLT_WORK_POOL, value: blt-k8s}
+            - {name: PREFECT_INTEGRATIONS_KUBERNETES_OBSERVER_NAMESPACES, value: blt}
+            # The run pods get the auth string and the API key from this
+            # Secret by reference, never in the Job.
+            - {name: PREFECT_INTEGRATIONS_KUBERNETES_WORKER_API_AUTH_STRING_SECRET_NAME, value: blt-app}
+            - {name: PREFECT_INTEGRATIONS_KUBERNETES_WORKER_API_AUTH_STRING_SECRET_KEY, value: PREFECT_AUTH}
             - {name: PREFECT_API_URL, value: "http://prefect-server.blt.svc:4200/api"}
             - {name: BLT_API_URL, value: "http://blt-api.blt.svc:8000"}
             - {name: BLT_MAX_PARALLEL, value: "4"}

@@ -114,3 +114,19 @@ fallback for when Harbor is down.)
 
 Secrets (`scripts/postgres-secrets.sh`, `scripts/blt-secrets.sh`) are
 made once; re-run `blt-secrets.sh` after changing `blt.env`.
+
+### A pod for each flow run (from the blt release after 2026.11.12)
+
+The worker runs no flow itself: it starts each run, whether a check, a
+collection or a parent fanning out, as a Kubernetes Job in `blt`, from
+its own image, and the pod goes an hour after the run ends. See blt-v5-poc
+`docs/kubernetes.md`. `worker-rbac.yaml` gives the worker its service
+account, which may manage Jobs and read pods in `blt` only.
+
+The work pool is a new one, `blt-k8s`: a pool's type cannot change.
+After the first apply with it, delete any runs left *Late* on the old
+`blt` pool in the Prefect UI. To watch runs come and go:
+
+```
+kubectl -n blt get jobs,pods -l prefect.io/flow-run-id -w
+```
