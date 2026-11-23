@@ -17,7 +17,19 @@ spec:
   imageName: ghcr.io/cloudnative-pg/postgresql:17.11-standard-trixie
   storage:
     storageClass: longhorn-single
-    size: 20Gi
+    # 20Gi filled on 2026-11-11 (see postgresql.parameters): 30Gi also
+    # gives the full primary room to start again. Grown in place
+    # (resizeInUseVolumes, Longhorn expands online); never shrunk.
+    size: 30Gi
+  postgresql:
+    parameters:
+      # A replica that stops streaming keeps its replication slot, and
+      # the slot keeps every WAL segment since - with archive_timeout
+      # (5min) that is 16MB every 5 minutes even when idle. Unbounded,
+      # that filled the primary's 20Gi in four days and took it down
+      # (2026-11-07 to 11-11). Past 4GB the slot is dropped instead and
+      # that replica is re-cloned; the primary stays up.
+      max_slot_wal_keep_size: "4GB"
   affinity:
     enablePodAntiAffinity: true
     podAntiAffinityType: required
